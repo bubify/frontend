@@ -4,7 +4,7 @@ import TableRow from "@material-ui/core/TableRow";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Skeleton6row3column } from "../../../constantTemplates/SkeletonTable";
-import ClaimedBy from "../../claimedBy";
+import UserProfile from "../../userProfile";
 import GenericTable from "../../genericTable";
 import { withUser } from "../../userContext";
 import { EContextValue } from "../../userContext/UserContext";
@@ -63,7 +63,7 @@ function HelpTableStudent(props: HelpTableProps & EContextValue) {
             <PassedTime date={row.requestTime}/>
             </TableCell>
             <TableCell align="left">
-              {row.helper ? <ClaimedBy examiner={row.helper} /> : <p></p>}
+              {row.helper ? <UserProfile user={row.helper} /> : <p></p>}
             </TableCell>
           </TableRow>
         );

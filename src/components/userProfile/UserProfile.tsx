@@ -5,27 +5,27 @@ import { fullName } from "../../utils/fullName";
 import ProfilePicture from "../profilePicture";
 
 interface Props {
-  examiner: User;
+  user: User;
 }
-const ClaimedBy = (props: Props) => {
+const UserProfile = (props: Props) => {
   return (
     <>
       <Tooltip
         title={
-          props.examiner.needsProfilePic ? (
+          props.user.needsProfilePic ? (
             ""
           ) : (
               <div style={{ margin: "10px", textAlign: "center" }}>
-                <ProfilePicture customUser={props.examiner} disableInitials />
+                <ProfilePicture customUser={props.user} disableInitials />
               </div>
             )
         }
       >
         <span style={{ display: "inline-block" }}>
-          {fullName(props.examiner)}
+          {fullName(props.user)}
         </span>
       </Tooltip>
     </>
   );
 };
-export default ClaimedBy;
+export default UserProfile;

@@ -14,7 +14,7 @@ import { Skeleton6row7column } from "../../../constantTemplates/SkeletonTable";
 import { HelpRequest } from "../../../models/HelpRequest";
 import axios from "../../../utils/axios";
 import LinkifyText from "../../../utils/linkify";
-import ClaimedBy from "../../claimedBy";
+import UserProfile from "../../userProfile";
 import GenericTable from "../../genericTable";
 import PassedTime from "../../passedTime";
 import { SafeButton } from "../../safeButton/SafeButton";
@@ -120,9 +120,12 @@ function HelpTableTeacher(props: HelpTableProps & EContextValue) {
         return (
           <TableRow key={row.id} style={highlight}>
             <TableCell align="left" className={classes.cell}>
-              {row.submitters
-                .map((user) => user.firstName + " " + user.lastName)
-                .join(", ")}
+              {row.submitters.map((submitter, index) => (
+                <span key={index} style={{ display: "inline-block", marginRight: "5px" }}>
+                  <UserProfile user={submitter} />
+                  {index !== row.submitters.length - 1 && ", "}
+                </span>
+              ))}
             </TableCell>
             <TableCell align="left" className={classes.cell}>
               <LinkifyText>{row.message}</LinkifyText>
@@ -133,7 +136,7 @@ function HelpTableTeacher(props: HelpTableProps & EContextValue) {
             <TableCell className={classes.optionalColumn} align="left">
 
               {row.helper ? (
-                <ClaimedBy examiner={row.helper} />
+                <UserProfile user={row.helper} />
               ) : (
                   <p></p>
                 )}

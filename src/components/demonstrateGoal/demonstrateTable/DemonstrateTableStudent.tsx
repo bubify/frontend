@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { Skeleton6row3column } from "../../../constantTemplates/SkeletonTable";
 import { AchievementsResponse } from "../../../models/AchievementsResponse";
 import { User } from "../../../models/User";
-import ClaimedBy from "../../claimedBy";
+import UserProfile from "../../userProfile";
 import GenericTable from "../../genericTable/GenericTable";
 import PassedTime from "../../passedTime";
 import { withUser } from "../../userContext";
@@ -75,7 +75,7 @@ function DemonstrateTableStudent(props: DemonstrateTableProps & EContextValue) {
               <PassedTime date={row.time} />
             </TableCell>
             <TableCell align="left">
-              {row.examiner ? <ClaimedBy examiner={row.examiner} /> : <p></p>}
+              {row.examiner ? <UserProfile user={row.examiner} /> : <p></p>}
             </TableCell>
           </TableRow>
         );

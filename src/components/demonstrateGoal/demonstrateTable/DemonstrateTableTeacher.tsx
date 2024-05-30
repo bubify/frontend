@@ -16,7 +16,7 @@ import { DemonstrateRequest } from "../../../models/DemonstrateRequest";
 import { User } from "../../../models/User";
 import axios from "../../../utils/axios";
 import AchievementHoverLabel from "../../achievementHoverLabel";
-import ClaimedBy from "../../claimedBy";
+import UserProfile from "../../userProfile";
 import GenericTable from "../../genericTable";
 import GradeStudent, { SelectedDemonstration } from "../../gradeStudent/GradeStudent";
 import PassedTime from "../../passedTime";
@@ -141,16 +141,19 @@ function DemonstrateTableTeacher(props: DemonstrateTableProps & EContextValue) {
         return (
           <TableRow key={row.id} style={highlight}>
             <TableCell align="left" className={classes.cell}>
-              {row.submitters
-                .map((user) => user.firstName + " " + user.lastName)
-                .join(", ")}
+              {row.submitters.map((submitter, index) => (
+                <span key={index} style={{ display: "inline-block", marginRight: "5px" }}>
+                  <UserProfile user={submitter} />
+                  {index !== row.submitters.length - 1 && ", "}
+                </span>
+              ))}
             </TableCell>
             <TableCell align="left" className={classes.timeCell}>
               <PassedTime date={row.time} />
             </TableCell>
             <TableCell className={classes.optionalColumn} align="left">
               {row.examiner ? (
-                <ClaimedBy examiner={row.examiner} />
+                <UserProfile user={row.examiner} />
               ) : (
                   <p></p>
                 )}
