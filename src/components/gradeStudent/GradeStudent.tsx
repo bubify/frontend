@@ -61,6 +61,7 @@ interface State {
   grade: Map<UserId, Map<AchievementId, PFP>>;
   confirmedValues: boolean[][];
   confirmAssessment: boolean;
+  passStatus: Map<UserId, Map<AchievementId, boolean>>;
 }
 
 const ModalStyle = {
@@ -98,7 +99,7 @@ const styles = (theme: Theme) => ({
 class GradeStudent extends React.Component<
   Props & WithTranslation & EContextValue,
   State
-  > {
+> {
   constructor(props: Props & WithTranslation & EContextValue) {
     super(props);
 
@@ -109,6 +110,7 @@ class GradeStudent extends React.Component<
       grade: new Map(),
       confirmAssessment: false,
       confirmedValues: [[]],
+      passStatus: new Map(),
     };
   }
 
@@ -118,9 +120,7 @@ class GradeStudent extends React.Component<
     const sortedAchievements = selectedDemonstration.achievements.sort((a, b) =>
       a.code.localeCompare(b.code)
     );
-    const sortedUsers: User[] = selectedDemonstration.submitters.sort(
-      sortSubmitters
-    );
+    const sortedUsers: User[] = selectedDemonstration.submitters.sort(sortSubmitters);
     const grade = this.state.grade;
     const confirmedValues: boolean[][] = new Array(sortedUsers.length)
       .fill(false)
@@ -132,9 +132,19 @@ class GradeStudent extends React.Component<
       });
     });
 
-    const usersNeedValidation: User[] = sortedUsers.filter(u => !u.verifiedProfilePic)
-
-    this.setState({ sortedUsers, sortedAchievements, grade, confirmedValues, usersNeedValidation });
+    const usersNeedValidation: User[] = sortedUsers.filter(
+      (u) => !u.verifiedProfilePic
+    );
+    
+    this.setState({
+      sortedUsers,
+      sortedAchievements,
+      grade,
+      confirmedValues,
+      usersNeedValidation,
+    }, () => {
+      this.getPassStatuses();
+    });
   }
 
   private handleSendRequest = async () => {
@@ -161,7 +171,7 @@ class GradeStudent extends React.Component<
           type: "success",
         });
       }
-    } catch (e) { }
+    } catch (e) {}
     this.props.handleDialog();
   };
 
@@ -181,14 +191,57 @@ class GradeStudent extends React.Component<
   }
 
   private async handleVerifcation(id: string) {
-    const response = await axios.put("/user/profile-pic/" + id + "/verified")
+    const response = await axios.put("/user/profile-pic/" + id + "/verified");
     if (response.status === 200) {
-      this.setState((prevState) => (
-        {
-          usersNeedValidation: prevState.usersNeedValidation.filter(u => u.id !== id)
-        }))
+      this.setState((prevState) => ({
+        usersNeedValidation: prevState.usersNeedValidation.filter(
+          (u) => u.id !== id
+        ),
+      }));
     }
+  }
 
+  private async achievementPassStatus(
+    userId: string,
+    achievementIds: string[]
+  ): Promise<{ [achievementId: string]: boolean }> {
+    const achievementIdsParam = achievementIds.join(",");
+
+    try {
+      const response = await axios.get(
+        `/remaining/alreadyPassed/${userId}?achievementIds=${achievementIdsParam}`
+      );
+
+      if (response.status === 200) {
+        const passStatusMap: { [achievementId: string]: boolean } =
+          response.data;
+        const convertedMap: { [achievementId: string]: boolean } = {};
+        for (const [key, value] of Object.entries(passStatusMap)) {
+          convertedMap[key] = value;
+        }
+
+        return convertedMap;
+      } else {
+        throw new Error(
+          "Could not get achievement pass status for user: " + userId
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching achievement pass status:", error);
+      throw error;
+    }
+  }
+
+  private async getPassStatuses() {
+    const passStatus = new Map<string, Map<string, boolean>>();
+
+    await Promise.all(this.state.sortedUsers.map(async (user) => {
+      const achievementIds = this.state.sortedAchievements.map((a) => a.id);
+      const passStatusMap = new Map(Object.entries(await this.achievementPassStatus(user.id, achievementIds)));
+      passStatus.set(user.id, passStatusMap);
+    }));
+
+    this.setState({ passStatus });
   }
 
   render() {
@@ -236,14 +289,20 @@ class GradeStudent extends React.Component<
                         {u.firstName + " " + u.lastName}<br />
                         <ProfilePicture customUser={u} disableInitials key={`profile-pic-grading.${u.id}`} />
                       </TableCell>
-                      {this.state.sortedAchievements.map((a, aIndex) => (
+                      {this.state.sortedAchievements.map((a, aIndex) => {
+                        const hasPassed = this.state.passStatus.get(u.id)?.get(a.id.toString());
+                        const greyedOutCellStyle = { backgroundColor: '#C5C5C5' };
+
+
+                        return (
                         <TableCell
                           key={`TableCell-grade-${u.id}-${a.id}`}
                           className={classes.timeCell}
                           align="left"
+                          style={hasPassed ? greyedOutCellStyle : {}}
                         >
                           <RadioGroup
-                            value={this?.state?.grade?.get(u.id)?.get(a.id)}
+                            value={hasPassed ? 'Pass' : this?.state?.grade?.get(u.id)?.get(a.id)}
                             aria-label="grading"
                             name="grade"
                             onClick={() => {
@@ -299,7 +358,7 @@ class GradeStudent extends React.Component<
                                 /></>}
                           </RadioGroup>
                         </TableCell>
-                      ))}
+                      )})}
                     </TableRow>
                   ))}
                 </TableBody>
